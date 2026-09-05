@@ -1,0 +1,52 @@
+{
+  "name": "postal-code-finder",
+  "version": "1.0.0",
+  "description": "台灣郵遞區號查詢系統 - 獨立部署版本",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "export": "next export",
+    "deploy": "npm run build && npm run export"
+  },
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.0",
+    "@types/pg": "^8.10.7",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "eslint": "^8.51.0",
+    "eslint-config-next": "^14.0.0",
+    "typescript": "^5.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "postal-code",
+    "taiwan",
+    "address",
+    "nextjs",
+    "react",
+    "supabase",
+    "vercel"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/postal-code-finder.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/postal-code-finder/issues"
+  },
+  "homepage": "https://github.com/your-username/postal-code-finder#readme"
+}

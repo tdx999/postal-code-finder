@@ -1,0 +1,560 @@
+.container {
+  padding: 2rem;
+  max-width: 960px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #1d1d1f;
+  background-color: #f5f5f7;
+  min-height: 100vh;
+  font-size: 16px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 2.5rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  background: linear-gradient(90deg, #007aff, #5856d6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 2.5rem;
+  text-decoration: none;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: #86868b;
+  margin-top: 0.5rem;
+}
+
+.main {
+  /* This class is a placeholder for main content area styling if needed */
+}
+
+.footer {
+  text-align: center;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  color: #86868b;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 10px;
+}
+
+.primaryButton {
+  background-color: #0071e3;
+  color: white;
+  border: none;
+  border-radius: 980px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  text-decoration: none;
+  display: inline-block;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.2);
+}
+
+.primaryButton:hover {
+  background-color: #0077ed;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
+}
+
+.secondaryButton {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #1d1d1f;
+  border: none;
+  border-radius: 980px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.secondaryButton:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.card {
+  margin-bottom: 30px;
+  padding: 30px;
+  border-radius: 18px;
+  background-color: white;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.card h2 {
+  margin-top: 0;
+  margin-bottom: 25px;
+  font-weight: 600;
+  font-size: 28px;
+  color: #1d1d1f;
+}
+
+.formGroup {
+  margin-bottom: 25px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 500;
+  color: #1d1d1f;
+  font-size: 18px;
+}
+
+.input {
+  padding: 16px 20px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  width: 100%;
+  font-size: 18px;
+  transition: all 0.2s ease;
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.input:focus {
+  outline: none;
+  border-color: #0071e3;
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
+}
+
+.inputSmall {
+  padding: 16px 20px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  width: 200px;
+  font-size: 18px;
+  transition: all 0.2s ease;
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.inputSmall:focus {
+  outline: none;
+  border-color: #0071e3;
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
+}
+
+.helperText {
+  margin: 8px 0 0;
+  color: #86868b;
+  font-size: 16px;
+}
+
+.resultCard {
+  margin-bottom: 25px;
+  padding: 25px;
+  background-color: rgba(0, 113, 227, 0.05);
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.08);
+}
+
+.postalCodeBadge {
+  font-size: 42px;
+  font-weight: 700;
+  color: #0071e3;
+  padding: 12px 20px;
+  background-color: white;
+  border-radius: 16px;
+  border: none;
+  display: inline-block;
+  align-self: flex-start;
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.1);
+  margin-bottom: 15px;
+  letter-spacing: -0.5px;
+}
+
+.sameRoadCard {
+  margin-bottom: 25px;
+  padding: 25px;
+  background-color: rgba(255, 149, 0, 0.05);
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.08);
+}
+
+.sameRoadTitle {
+  margin: 0 0 20px 0;
+  color: #ff9500;
+  font-weight: 600;
+  font-size: 22px;
+}
+
+.resultSummaryCard {
+  margin-bottom: 25px;
+  padding: 25px;
+  background-color: rgba(0, 113, 227, 0.03);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.05);
+}
+
+.resultSummaryCard h3 {
+  margin: 0 0 15px 0;
+  font-weight: 600;
+  font-size: 22px;
+  color: #1d1d1f;
+}
+
+.postalCodeTag {
+  padding: 10px 18px;
+  background-color: #0071e3;
+  color: white;
+  border-radius: 980px;
+  font-weight: 500;
+  font-size: 20px;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.2);
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.tableHeader {
+  background: #f5f5f7;
+}
+
+.tableHeader th {
+  text-align: left;
+  font-weight: 600;
+  color: #1d1d1f;
+  font-size: 18px;
+  padding: 18px 20px;
+}
+
+.tableCell {
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  color: #1d1d1f;
+  font-size: 18px;
+}
+
+.postalCodeCell {
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  font-weight: 600;
+  color: #0071e3;
+  font-size: 18px;
+}
+
+.sameRoadTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.08);
+}
+
+.sameRoadTableHeader {
+  background: rgba(255, 149, 0, 0.05);
+}
+
+.sameRoadTableHeader th {
+  text-align: left;
+  font-weight: 600;
+  color: #1d1d1f;
+  font-size: 18px;
+  padding: 18px 20px;
+}
+
+.sameRoadTableCell {
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  color: #1d1d1f;
+  font-size: 18px;
+}
+
+.sameRoadPostalCodeCell {
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  font-weight: 600;
+  color: #ff9500;
+  font-size: 18px;
+}
+
+.debugSection {
+  margin-top: 30px;
+  padding: 20px;
+  border-radius: 16px;
+  background-color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.debugSummary {
+  cursor: pointer;
+  color: #86868b;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.debugContent {
+  padding: 20px;
+  background-color: rgba(0, 0, 0, 0.02);
+  margin-top: 15px;
+  border-radius: 12px;
+}
+
+.debugContent h4 {
+  margin-top: 0;
+  color: #1d1d1f;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.loadingIndicator {
+  text-align: center;
+  padding: 30px;
+  color: #86868b;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.flexRow {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+}
+
+.flexColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.flexWrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.bold {
+  font-weight: 600;
+}
+
+.textGray {
+  color: #86868b;
+}
+
+/* 注意事項與說明區塊樣式 */
+.infoSection {
+  margin-bottom: 30px;
+}
+
+.infoSection h3 {
+  font-size: 20px;
+  color: #1d1d1f;
+  margin-bottom: 15px;
+}
+
+.infoList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.infoList li {
+  margin-bottom: 12px;
+  color: #424245;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.infoList a {
+  color: #0071e3;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.infoList a:hover {
+  color: #0077ed;
+  text-decoration: underline;
+}
+
+.infoSection p {
+  color: #424245;
+  font-size: 17px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.matchTypeBadge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  margin: 8px 0;
+  font-weight: 500;
+}
+
+.exact {
+  background-color: #34c759;
+  color: white;
+}
+
+.nearest {
+  background-color: #ff9500;
+  color: white;
+}
+
+.original {
+  background-color: #ff3b30;
+  color: white;
+}
+
+.matchInfo {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background-color: #f5f5f7;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.formSection {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  background-color: rgba(0, 0, 0, 0.02);
+  font-size: 18px;
+  margin-bottom: 1rem;
+}
+
+.button {
+  background-color: #0071e3;
+  color: white;
+  border: none;
+  border-radius: 980px;
+  padding: 12px 24px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.2);
+}
+
+.button:disabled {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.4);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.formHint {
+  font-size: 0.9rem;
+  color: #86868b;
+  margin-top: 0.5rem;
+}
+
+/* 搜尋結果樣式 */
+.resultsContainer {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.resultHeader {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.resultHeader h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.resultHeader p {
+  margin: 0.5rem 0 0;
+  color: #86868b;
+}
+
+.englishAddressCard {
+  background-color: rgba(0, 113, 227, 0.05);
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.englishAddressCard h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0071e3;
+}
+
+.englishAddressCard p {
+  margin: 0;
+  font-size: 1.1rem;
+  font-family: monospace;
+}
+
+.resultsGrid {
+  display: grid;
+  gap: 1rem;
+}
+
+.resultItem {
+  display: flex;
+  align-items: center;
+  background-color: #f5f5f7;
+  padding: 1rem;
+  border-radius: 12px;
+}
+
+.postalCodeDisplay {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0071e3;
+  margin-right: 1.5rem;
+  padding-right: 1.5rem;
+  border-right: 2px solid rgba(0, 0, 0, 0.1);
+  line-height: 1;
+}
+
+.addressDetails p {
+  margin: 0 0 0.25rem;
+}
+
+.addressDetails p strong {
+  font-weight: 600;
+  margin-right: 0.5em;
+}
