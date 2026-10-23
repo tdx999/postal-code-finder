@@ -1,229 +1,295 @@
+/**
+ * API 線上文件與使用指南頁面 (/api-docs)
+ *
+ * 提供台灣 3+3 郵遞區號查詢系統的 API 文件、即時測試網址、一行嵌入小工具與 Fetch 範例。
+ *
+ * 主要功能：
+ *   - 小白三秒上手專區：網址列直接查、一行代碼嵌入小工具、三行程式碼 Fetch 呼叫
+ *   - 完整 API 端點規格：智慧地址查郵遞區號、縣市、行政區與路名查詢 API
+ *   - 一鍵複製與線上測試：提供程式碼一鍵複製與新分頁即時測試功能
+ *   - 流量限制與常見問題：展示伺服器呼叫額度與常見問題解答
+ *
+ * 依賴服務：
+ *   - /api/public/rate-limit: 讀取伺服器當前 API 流量限制設定
+ *   - GoogleAd: 廣告展示元件
+ */
+
 import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { AdSenseScript } from '../components/GoogleAd';
 import styles from '../styles/ApiDocs.module.css';
 
+const BASE_URL = 'https://postal-code-finder-lac.vercel.app';
+
 const ApiDocs = () => {
   const [rate, setRate] = useState(null);
+  const [copiedKey, setCopiedKey] = useState('');
+
   useEffect(() => {
     let mounted = true;
     fetch('/api/public/rate-limit')
-      .then(r => r.json())
-      .then(j => { if (mounted) setRate(j && j.data ? j.data : null) })
+      .then((r) => r.json())
+      .then((j) => {
+        if (mounted && j?.data) setRate(j.data);
+      })
       .catch(() => {});
-    return () => { mounted = false };
+    return () => {
+      mounted = false;
+    };
   }, []);
+
+  const handleCopy = (text, key) => {
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(''), 2000);
+    }
+  };
+
+  const sampleUrl = `${BASE_URL}/api/postal-code?address=台北市中正區忠孝西路一段1號`;
+  const widgetCode = `<script src="${BASE_URL}/zip-widget.js" defer></script>`;
+  const fetchCode = `// 查詢台灣 3+3 郵遞區號
+async function getPostalCode(address) {
+  const res = await fetch(\`${BASE_URL}/api/postal-code?address=\${encodeURIComponent(address)}\`);
+  const data = await res.json();
+  return data?.data?.postal_code; // 例如回傳 "100001"
+}
+
+// 使用範例：
+getPostalCode("台北市中正區忠孝西路一段1號").then(zip => console.log("郵遞區號：", zip));`;
+
   return (
     <>
       <Head>
-        <title>API 使用文件 - 小白玩AI-3+3台灣郵遞區號查詢系統</title>
-        <meta name="description" content="台灣郵遞區號查詢系統 API 使用文件與範例" />
+        <title>台灣 3+3 郵遞區號 API 快速使用指南</title>
+        <meta
+          name="description"
+          content="超簡單的台灣 3+3 郵遞區號 API，支援網址列直接查詢、一行 HTML 小工具嵌入與現代 Fetch 呼叫。"
+        />
         <AdSenseScript />
       </Head>
-      
+
       <div className={styles.container}>
         <header className={styles.header}>
-          <h1>API 使用文件</h1>
-          <p>快速整合郵遞區號查詢功能到您的應用程式</p>
+          <h1>📮 台灣 3+3 郵遞區號 API 使用指南</h1>
+          <p>免金鑰、超簡單！支援瀏覽器直接查、一行嵌入小工具與 RESTful API。</p>
         </header>
 
         <nav className={styles.nav}>
-          <Link href="/">回首頁</Link>
-          <Link href="/api-docs">API 文件</Link>
+          <Link href="/">🏠 回到首頁</Link>
+          <Link href="/embed-demo">📱 小工具展示頁</Link>
+          <a
+            href="https://github.com/tdx999/postal-code-finder"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            💻 GitHub 原始碼
+          </a>
         </nav>
 
         <main className={styles.main}>
-        <section className={styles.section}>
-            <h2>基礎資訊</h2>
-            <div className={styles.infoList}>
-              <div className={styles.infoItem}>
-                <h3>Base URL</h3>
-                <code className={styles.urlCode}>https://postal-code-finder.vercel.app/api</code>
-                <div className={styles.urlExample}>
-                  <p><strong>可用網址查詢範例：</strong></p>
-                  <code className={styles.urlCode}>
-                    https://postal-code-finder-kshtn6k5n-autoassts-projects.vercel.app/api/postal-code?address=你要的住址
-                  </code>
-                </div>
+          {/* 小白 3 秒上手專區 */}
+          <section className={styles.section}>
+            <h2>⚡ 小白 3 招快速上手（選最適合您的方式）</h2>
+            <p style={{ color: '#64748b', marginTop: '-8px', marginBottom: '18px' }}>
+              完全免費、免申請 API Key，直接套用即可！
+            </p>
+
+            {/* 第 1 招 */}
+            <div className={styles.levelCard}>
+              <div className={styles.cardHeader}>
+                <h3 style={{ margin: 0, fontSize: '1.1rem' }}>
+                  🟢 第 1 招：免寫程式！網址列直接查
+                </h3>
+                <span className={`${styles.badge} ${styles.badgeGreen}`}>最簡單 / 任何人都能用</span>
               </div>
-              <div className={styles.infoItem}>
-                <h3>認證方式</h3>
-                <p>目前為開放使用，無需 API Key</p>
+              <p style={{ margin: '6px 0', fontSize: '0.95rem' }}>
+                只要在瀏覽器網址列貼上以下網址，把最後面的地址換成您想查的地址，按下 Enter 就能看到結果：
+              </p>
+              <div className={styles.codeBox}>
+                <code>{sampleUrl}</code>
               </div>
-              <div className={styles.infoItem}>
-                <h3>回應格式</h3>
-                <p>JSON</p>
-                <pre className={styles.jsonExample}><code>{`{
+              <div className={styles.actionBtnGroup}>
+                <button
+                  className={styles.copyBtn}
+                  onClick={() => handleCopy(sampleUrl, 'url')}
+                >
+                  {copiedKey === 'url' ? '✅ 已複製網址！' : '📋 複製測試網址'}
+                </button>
+                <a
+                  href={sampleUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.copyBtnSecondary}
+                >
+                  🔗 點我直接在瀏覽器開啟測試
+                </a>
+              </div>
+            </div>
+
+            {/* 第 2 招 */}
+            <div className={styles.levelCard}>
+              <div className={styles.cardHeader}>
+                <h3 style={{ margin: 0, fontSize: '1.1rem' }}>
+                  🟡 第 2 招：一行代碼嵌入到您的網站 (Widget)
+                </h3>
+                <span className={`${styles.badge} ${styles.badgeBlue}`}>站長必備 / 免自己刻畫面</span>
+              </div>
+              <p style={{ margin: '6px 0', fontSize: '0.95rem' }}>
+                把這行 HTML 貼到您的部落格、WordPress 或任何網頁中，就會自動生出一個漂亮的查詢框與按鈕：
+              </p>
+              <div className={styles.codeBox}>
+                <code>{widgetCode}</code>
+              </div>
+              <div className={styles.actionBtnGroup}>
+                <button
+                  className={styles.copyBtn}
+                  onClick={() => handleCopy(widgetCode, 'widget')}
+                >
+                  {copiedKey === 'widget' ? '✅ 已複製代碼！' : '📋 複製嵌入代碼'}
+                </button>
+                <Link href="/embed-demo" className={styles.copyBtnSecondary}>
+                  👀 查看小工具實際長相
+                </Link>
+              </div>
+            </div>
+
+            {/* 第 3 招 */}
+            <div className={styles.levelCard}>
+              <div className={styles.cardHeader}>
+                <h3 style={{ margin: 0, fontSize: '1.1rem' }}>
+                  🔵 第 3 招：工程師最愛！三行 JavaScript (Fetch)
+                </h3>
+                <span className={`${styles.badge} ${styles.badgePurple}`}>前端串接 / 開發者專用</span>
+              </div>
+              <p style={{ margin: '6px 0', fontSize: '0.95rem' }}>
+                在您的前端或 Node.js 程式中直接呼叫，立即取得乾淨的 JSON 格式回傳：
+              </p>
+              <div className={styles.codeBox}>
+                <code>{fetchCode}</code>
+              </div>
+              <div className={styles.actionBtnGroup}>
+                <button
+                  className={styles.copyBtn}
+                  onClick={() => handleCopy(fetchCode, 'fetch')}
+                >
+                  {copiedKey === 'fetch' ? '✅ 已複製程式碼！' : '📋 複製 Fetch 程式碼'}
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {/* 回應格式說明 */}
+          <section className={styles.section}>
+            <h2>📦 API 回傳 JSON 格式說明</h2>
+            <p>請求成功時回傳標準 JSON 物件，包含地址、3+3 碼郵遞區號以及官方標準英文翻譯地址：</p>
+            <pre className={styles.jsonExample}>
+              <code>{`{
   "success": true,
   "data": {
-    "address": "桃園市中壢區中山路100號",
-    "input_address": "桃園市中壢區中山路100號",
-    "postal_code": "320001",
-    "english_address": "No. 100, Zhongshan Rd., Zhongli Dist., Taoyuan City 320001, Taiwan (R.O.C.)"
+    "postal_code": "100001",                                                               // 3+3 碼郵遞區號
+    "address": "臺北市中正區忠孝西路一段1號",                                                // 格式化標準中文地址
+    "input_address": "台北市中正區忠孝西路一段1號",                                          // 原始輸入的地址
+    "english_address": "No. 1, Sec. 1, Zhongxiao W. Rd., Zhongzheng Dist., Taipei City 100001, Taiwan (R.O.C.)" // 英文地址
   }
-}`}</code></pre>
-              </div>
-            </div>
+}`}</code>
+            </pre>
           </section>
+
+          {/* 完整端點清單 */}
           <section className={styles.section}>
-            <h2>概述</h2>
-            <p>
-              我們的 API 提供簡單且強大的方式來查詢台灣郵遞區號資訊。
-              支援多種查詢方式，以及地址翻譯功能。
-            </p>
-          </section>
-          <section className={styles.section}>
-            <h2>超簡版</h2>
-            <p>不需要安裝任何東西，直接把下面的程式貼到你的網頁就可以用。</p>
-            <div className={styles.codeExamples}>
-              <div className={styles.codeTab}>
-                <h3>方法 A：一行就好（建議）</h3>
-                <pre><code>{`<!-- 把這一行貼到你的頁面（建議放在 </body> 前） -->
-<script src="https://your-domain.com/zip-widget.js" data-show="full" defer></script>`}</code></pre>
-                <p>貼上後，頁面會自動出現：地址輸入框、查詢按鈕、3+3 區號、完整地址、原始輸入、英文地址。</p>
-                <p>如果要指定放在哪個區塊：</p>
-                <pre><code>{`<div id="zip-container"></div>
-<script src="https://your-domain.com/zip-widget.js" data-target="zip-container" data-show="full" defer></script>`}</code></pre>
+            <h2>📋 完整 API 端點一覽 (EndPoints)</h2>
+            <div className={styles.infoList}>
+              <div className={styles.infoItem}>
+                <div className={styles.endpointInfo}>
+                  <span className={styles.method}>GET</span>
+                  <code className={styles.path}>/api/postal-code?address=完整地址</code>
+                </div>
+                <p><strong>說明：</strong>輸入任意台灣地址，系統自動智慧匹配並回傳精確 3+3 郵遞區號。</p>
               </div>
 
-              <div className={styles.codeTab}>
-                <h3>方法 B：最簡 Fetch（自己控制顯示）</h3>
-                <pre><code>{`<script>
-function getZip() {
-  var addr = document.getElementById('addr').value;
-  fetch('https://your-domain.com/api/postal-code?address=' + encodeURIComponent(addr))
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      var data = d && d.data ? d.data : {};
-      document.getElementById('zip').textContent = data.postal_code || '';
-      document.getElementById('addrOut').textContent = data.address || '';
-      document.getElementById('inputOut').textContent = data.input_address || '';
-      document.getElementById('eng').textContent = data.english_address || '';
-    })
-    .catch(function(){
-      document.getElementById('zip').textContent = '';
-    });
-}
-</script>
-
-<input id="addr" placeholder="請輸入完整地址">
-<button onclick="getZip()">查郵遞區號</button>
-<div>3+3 郵遞區號：<span id="zip"></span></div>
-<div>完整地址：<span id="addrOut"></span></div>
-<div>原始輸入：<span id="inputOut"></span></div>
-<div>英文地址：<span id="eng"></span></div>`}</code></pre>
-                <p>把 <code>your-domain.com</code> 換成你的網域或本機（例如 <code>http://localhost:3002</code>）。</p>
-              </div>
-            </div>
-          </section>
-          <section className={styles.section}>
-            <h2>快速整合</h2>
-            <div className={styles.codeExamples}>
-              <div className={styles.codeTab}>
-                <h3>一段程式（Fetch，取 3+3 區號）</h3>
-                <pre><code>{`<script>
-async function getZip(address) {
-  const res = await fetch('https://your-domain.com/api/postal-code?address=' + encodeURIComponent(address))
-  const json = await res.json()
-  return json?.data?.postal_code || ''
-}
-
-// 範例：按鈕觸發
-async function onLookup() {
-  const addr = document.getElementById('addr').value
-  const zip = await getZip(addr)
-  document.getElementById('zip').textContent = zip || '查無資料'
-}
-</script>
-
-<input id="addr" placeholder="請輸入完整地址">
-<button onclick="onLookup()">查郵遞區號</button>
-<div>3+3 郵遞區號：<span id="zip"></span></div>`}</code></pre>
+              <div className={styles.infoItem}>
+                <div className={styles.endpointInfo}>
+                  <span className={styles.method}>GET</span>
+                  <code className={styles.path}>/api/address/cities</code>
+                </div>
+                <p><strong>說明：</strong>取得全台灣所有縣市清單（例如：台北市、新北市、台中市...）。</p>
               </div>
 
-              <div className={styles.codeTab}>
-                <h3>一行嵌入（自動產生輸入＋按鈕＋結果）</h3>
-                <pre><code>{`<!-- 放在你的頁面任意位置（建議 body 結尾） -->
-<script src="https://your-domain.com/zip-widget.js" defer></script>`}</code></pre>
-                <p>可選參數：</p>
-                <pre><code>{`<!-- 指定掛載容器與 API Base URL -->
-<div id="zip-container"></div>
-<script src="https://your-domain.com/zip-widget.js" data-target="zip-container" data-api="https://your-domain.com" defer></script>`}</code></pre>
-                <pre><code>{`<!-- 顯示完整欄位（address/input_address/english_address） -->
-<script src="https://your-domain.com/zip-widget.js" data-show="full" defer></script>`}</code></pre>
-                <p>
-                  範例頁：<Link href="/embed-demo">/embed-demo</Link>
-                </p>
+              <div className={styles.infoItem}>
+                <div className={styles.endpointInfo}>
+                  <span className={styles.method}>GET</span>
+                  <code className={styles.path}>/api/address/areas?city=縣市名稱</code>
+                </div>
+                <p><strong>說明：</strong>取得指定縣市下的所有行政區/鄉鎮市區（例如：中正區、大安區...）。</p>
+              </div>
+
+              <div className={styles.infoItem}>
+                <div className={styles.endpointInfo}>
+                  <span className={styles.method}>GET</span>
+                  <code className={styles.path}>/api/address/roads?city=縣市&district=行政區</code>
+                </div>
+                <p><strong>說明：</strong>取得指定區域下的所有道路街名清單。</p>
+              </div>
+
+              <div className={styles.infoItem}>
+                <div className={styles.endpointInfo}>
+                  <span className={styles.method}>GET</span>
+                  <code className={styles.path}>/api/db-health</code>
+                </div>
+                <p><strong>說明：</strong>伺服器與資料庫健康檢查端點，回傳 <code>{`{ "ok": true }`}</code> 代表連線正常。</p>
               </div>
             </div>
           </section>
 
+          {/* 使用限制 */}
           <section className={styles.section}>
-            <h2>錯誤處理</h2>
-            <p>API 使用標準的 HTTP 狀態碼來表示請求的成功或失敗：</p>
-            <ul>
-              <li><code>200 OK</code>: 請求成功</li>
-              <li><code>400 Bad Request</code>: 請求參數錯誤</li>
-              <li><code>404 Not Found</code>: 找不到相關資料</li>
-              <li><code>500 Internal Server Error</code>: 伺服器錯誤</li>
-            </ul>
-            
-            <div className={styles.errorExample}>
-              <h4>錯誤回應格式</h4>
-              <pre><code>{`{
-  "success": false,
-  "message": "請提供 address 或 (city + district) 或 postalCode 參數"
-}`}</code></pre>
-            </div>
-          </section>
-
-          <section className={styles.section}>
-            <h2>使用限制</h2>
+            <h2>🛡️ 呼叫頻率限制 (Rate Limit)</h2>
             <div className={styles.limitations}>
+              <p>為了維護伺服器穩定與防止惡意爬蟲，本系統設有基礎防刷限制：</p>
               <ul>
-                <li><strong>查詢次數</strong>: 每台裝置在一段時間（約 {rate?.windowSeconds ?? '?'} 秒）最多查詢 {rate?.defaultPerMinute ?? '?'} 次</li>
-                <li><strong>暫停說明</strong>: 查太快會被暫停一下；超過 {rate?.violationThreshold ?? '?'} 次超額會暫停 {rate?.banDurationSeconds ?? '?'} 秒</li>
-                <li><strong>大量使用</strong>: 有大量需求？跟我們說一聲可以提高額度或加入白名單</li>
+                <li>
+                  <strong>每分鐘呼叫上限：</strong>每個 IP 每分鐘最多允許查詢{' '}
+                  <strong>{rate?.defaultPerMinute ?? 20} 次</strong>。
+                </li>
+                <li>
+                  <strong>暫停處分：</strong>若連續短時間大量違規超過{' '}
+                  <strong>{rate?.violationThreshold ?? 3} 次</strong>，系統將自動暫停存取約{' '}
+                  <strong>{rate?.banDurationSeconds ? Math.round(rate.banDurationSeconds / 60) : 30} 分鐘</strong>。
+                </li>
+                <li>
+                  <strong>一般使用完全不影響：</strong>正常使用者瀏覽與查詢不會觸發限制。若有特殊大量整合需求，歡迎至 GitHub 提出 Issue！
+                </li>
               </ul>
             </div>
           </section>
 
+          {/* 常見問題 */}
           <section className={styles.section}>
-            <h2>常見問題</h2>
+            <h2>❓ 常見問題 Q&A</h2>
             <div className={styles.faq}>
-            <div className={styles.faqItem}>
-                <h4>Q: 都是已中華郵政的資料為主嗎？有其他資料來源嗎？</h4>
-                <p>A: 本查詢是根據 中華郵政(郵局) 的資料為基礎，查詢出的結果有時會有錯誤, 完全正確資料請查 中華郵政(郵局) 官網。</p>
-              </div> 
               <div className={styles.faqItem}>
-                <h4>Q: API 是否有使用限制？</h4>
-                <p>A: 簡單說：每台裝置在一段時間（約 {rate?.windowSeconds ?? '?'} 秒）能查 {rate?.defaultPerMinute ?? '?'} 次。太快會被暫停一下；需要更高額度請聯絡我們。</p>
+                <h4>Q1：使用這個 API 需要付費或註冊帳號嗎？</h4>
+                <p>A：完全免費！免申請帳號、免 API Key，直接呼叫即可使用。</p>
               </div>
-              
               <div className={styles.faqItem}>
-                <h4>Q: 資料多久更新一次？</h4>
-                <p>A: 不知道多久更新同步，現在郵局資料取得不易。</p>
+                <h4>Q2：地址輸入不完整也可以查嗎？</h4>
+                <p>A：可以！系統具備智慧模糊匹配能力，即使缺少「市」或「區」，系統也會盡力匹配最符合的道路與郵遞區號。</p>
               </div>
-              
               <div className={styles.faqItem}>
-                <h4>Q: 可以批次查詢嗎？</h4>
-                <p>A: 目前支援單筆查詢，批次查詢功能正在開發中。</p>
-              </div>
-              
-              <div className={styles.faqItem}>
-                <h4>Q: 如何處理特殊地址？</h4>
-                <p>A: 系統會自動解析巷、弄、號等資訊，並提供最接近的郵遞區號。</p>
+                <h4>Q3：資料來源是哪裡？</h4>
+                <p>A：本系統資料以中華郵政官方 3+3 郵遞區號資料庫為基礎進行整理與索引優化。</p>
               </div>
             </div>
           </section>
         </main>
 
         <footer className={styles.footer}>
-          <p>&copy; 2025 小白玩AI-3+3台灣郵遞區號查詢系統. All rights reserved.</p>
-          <p>網站所提供之資料, 僅供使用者參考, 如查詢結果與實際不同, 請以中華郵政(郵局)資料為準, 對於查詢結果錯誤, 本網站不負任何法律責任</p>
-          <p>本系統僅供個人研究使用，如有任何問題，請聯絡 ai.autoasst@gmail.com</p>
-          <p>如需技術支援，請聯絡 ai.autoasst@gmail.com</p>
+          <p>© 2026 Taiwan Postal Code Finder (台灣 3+3 郵遞區號查詢系統)</p>
+          <p>
+            本服務資料僅供參考，實際郵遞投遞標準請以中華郵政官方為準。
+          </p>
         </footer>
       </div>
     </>
