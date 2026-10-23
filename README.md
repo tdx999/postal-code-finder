@@ -28,10 +28,12 @@ postal-code-finder/
 │   └── api/             # 後端 API (查詢郵遞區號、縣市、區域、路名)
 ├── lib/                 # 共用工具（PostgreSQL 連線池、API 限流器）
 ├── config/              # 設定檔（限流規則 rateLimit.json）
-├── scripts/             # 資料庫連線測試與匯入工具
-├── docs/                # 詳細部署與疑難排解指南
+├── scripts/             # 資料庫連線測試 (test-db-connection.js) 與建表結構 (schema.sql)
+├── docs/                # 詳細部署指南與資料庫建置說明 (DATABASE-GUIDE.md)
 └── public/              # 靜態資源與外部嵌入小工具 (zip-widget.js)
 ```
+
+> 📖 **資料庫完整架構與欄位說明**：請參閱 [docs/DATABASE-GUIDE.md](docs/DATABASE-GUIDE.md)，建表語法請參閱 [scripts/schema.sql](scripts/schema.sql)。
 
 ---
 
