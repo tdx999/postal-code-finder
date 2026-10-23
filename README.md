@@ -49,7 +49,7 @@ npm install
 DATABASE_URL="postgresql://postgres.[專案ID]:[你的資料庫密碼]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres"
 ```
 
-> 💡 **新手注意（避坑指南）**：
+> **新手注意**：
 > 1. 請使用 Supabase 的 **Transaction Pooler** 連線（連接埠為 `6543`，網址通常包含 `pooler.supabase.com`）。
 > 2. 請**不要**使用 5432 的直接連線，避免 Serverless 環境因連線數過多而報錯。
 > 3. 您可以隨時執行 `npm run test:db` 測試連線是否正常。
