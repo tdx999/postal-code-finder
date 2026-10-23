@@ -1,30 +1,13 @@
-import { Pool } from 'pg'
-
-const isLocal = process.env.DATABASE_URL && (process.env.DATABASE_URL.includes('localhost') || process.env.DATABASE_URL.includes('127.0.0.1'))
-const pool = new Pool(
-  process.env.DATABASE_URL
-    ? {
-        connectionString: process.env.DATABASE_URL,
-        ssl: isLocal ? false : { rejectUnauthorized: false },
-        max: 20,
-        idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 2000,
-      }
-    : {
-        user: process.env.POSTGRES_USER || 'realestateadmin',
-        password: process.env.POSTGRES_PASSWORD || 'Realestate@123456',
-        host: process.env.POSTGRES_HOST || 'localhost',
-        port: parseInt(process.env.POSTGRES_PORT || '15540'),
-        database: process.env.POSTGRES_DB || 'realestate_db',
-        max: 20,
-        idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 2000,
-      }
-)
+import pool from '../../../lib/db'
+import { checkRate } from '../../../lib/rateLimit'
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, message: '只允許 GET 請求' })
+  }
+  const rate = checkRate(req)
+  if (!rate.allowed) {
+    return res.status(429).json({ success: false, message: '超出每分鐘限制', limit: rate.limit, remaining: rate.remaining, reset: rate.resetAt })
   }
 
   const { roadName, district } = req.query
@@ -117,3 +100,6 @@ export default async function handler(req, res) {
     return res.status(500).json({ success: false, message: '資料庫查詢錯誤', error: { message: error.message } })
   }
 }
+// 道路英文翻譯 API
+// 輸入：roadName（必填）、district（可選）
+// 功能：回傳道路英文名、所屬城市/區域英文與遞送範圍等資訊；每 IP 限流檢查

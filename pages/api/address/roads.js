@@ -1,16 +1,14 @@
-import { Pool } from 'pg'
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: false,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-})
+import pool from '../../../lib/db'
+import { checkRate } from '../../../lib/rateLimit'
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, message: '方法不允許' })
+  }
+
+  const rate = checkRate(req)
+  if (!rate.allowed) {
+    return res.status(429).json({ success: false, message: '超出每分鐘限制', limit: rate.limit, remaining: rate.remaining, reset: rate.resetAt })
   }
 
   const { city, district, search } = req.query
@@ -35,3 +33,6 @@ export default async function handler(req, res) {
     return res.status(500).json({ success: false, message: '伺服器錯誤', error: error.message })
   }
 }
+// 道路清單 API（指定城市與區域）
+// 輸入：city、district、search（可選，模糊搜尋路名）
+// 功能：列出道路清單、每 IP 限流檢查

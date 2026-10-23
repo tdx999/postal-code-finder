@@ -45,7 +45,9 @@ const GoogleAd = ({
           textAlign: 'center',
           color: '#666',
           fontSize: '14px',
-          margin: '10px 0',
+          margin: style.margin ?? '20px auto',
+          maxWidth: style.maxWidth ?? '980px',//頂部廣告版本寬度設定
+          width: style.width ?? '100%',//百分比
           borderRadius: '8px'
         }}
       >
@@ -62,7 +64,15 @@ const GoogleAd = ({
 
   // 正式模式：載入真實廣告
   return (
-    <div className="google-ad-container" style={style}>
+    <div 
+      className="google-ad-container" 
+      style={{
+        ...style,
+        margin: style.margin ?? '20px auto',
+        maxWidth: style.maxWidth ?? '860px',
+        width: style.width ?? '100%'
+      }}
+    >
       <ins className="adsbygoogle"
         style={{ display: 'block' }}
         data-ad-client={ADSENSE_CLIENT_ID}
@@ -112,7 +122,8 @@ export const BannerAd = () => (
   <GoogleAd 
     adSlot="1234567891"
     adFormat="horizontal"
-    style={{ margin: '20px 0' }}
+    fullWidthResponsive={false}
+    style={{ margin: '20px auto', maxWidth: '860px', width: '100%' }}
   />
 );
 

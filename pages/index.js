@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import SimpleAddressForm from '../components/SimpleAddressForm';
 import styles from '../styles/AddressDemo.module.css';
 import { translateAddress } from '../services/addressTranslation';
+import { BannerAd, SidebarAd } from '../components/GoogleAd';
 
 const AddressDemo = () => {
   const [searchResults, setSearchResults] = useState([]);
@@ -11,6 +12,7 @@ const AddressDemo = () => {
   const [englishAddress, setEnglishAddress] = useState(null);
   const [matchType, setMatchType] = useState(null);
   const [matchDistance, setMatchDistance] = useState(null);
+  const [dbStatus, setDbStatus] = useState('loading');
 
   // 添加事件監聽器，監聽自定義的表單提交事件
   useEffect(() => {
@@ -23,6 +25,39 @@ const AddressDemo = () => {
     
     return () => {
       window.removeEventListener('search-submit', handleCustomFormSubmit);
+    };
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const checkDb = async () => {
+      try {
+        const response = await fetch('/api/db-health', { signal: controller.signal });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const data = await response.json();
+        if (isActive) {
+          setDbStatus(data && data.ok ? 'ok' : 'fail');
+        }
+      } catch (error) {
+        if (isActive) {
+          setDbStatus('fail');
+        }
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    };
+
+    checkDb();
+
+    return () => {
+      isActive = false;
+      clearTimeout(timeoutId);
+      controller.abort();
     };
   }, []);
   
@@ -442,7 +477,10 @@ const AddressDemo = () => {
           };
           if (filteredResults.length > 0 && addressForTranslation) {
             try {
-              const translatedAddress = await translateAddress(addressForTranslation);
+              const translatedAddress = await translateAddress(
+                addressForTranslation,
+                filteredResults[0]?.postal_code || ''
+              );
               setEnglishAddress(translatedAddress);
             } catch (e) {
               setEnglishAddress(null);
@@ -463,12 +501,15 @@ const AddressDemo = () => {
               originalAddress: `${firstResult.city}${firstResult.district}${firstResult.road}`
             });
             try {
-              const translatedAddress = await translateAddress({
-                city: firstResult.city,
-                district: firstResult.district,
-                road: firstResult.road,
-                detail: ''
-              });
+              const translatedAddress = await translateAddress(
+                {
+                  city: firstResult.city,
+                  district: firstResult.district,
+                  road: firstResult.road,
+                  detail: ''
+                },
+                firstResult.postal_code || ''
+              );
               setEnglishAddress(translatedAddress);
             } catch (e) {
               setEnglishAddress(null);
@@ -721,10 +762,29 @@ const AddressDemo = () => {
   };
 
   return (
-    <div className={styles.container}>
+    <div className={styles.pageLayout}>
+      <aside className={`${styles.sidebar} ${styles.leftSidebar}`}>
+        <SidebarAd />
+      </aside>
+      <main className={styles.mainContent}>
+        <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.title}>
-          AutoAsst AI - 郵遞區號小助手
+          小白玩AI - 3+3郵遞區號小助手
+        </div>
+        <div className={styles.dbStatusRow}>
+          <span
+            className={`${styles.dbStatusDot} ${
+              dbStatus === 'ok'
+                ? styles.dbStatusOk
+                : dbStatus === 'fail'
+                ? styles.dbStatusFail
+                : styles.dbStatusPending
+            }`}
+          />
+          <span className={styles.dbStatusText}>
+            Supabase: {dbStatus === 'ok' ? 'Connected' : dbStatus === 'fail' ? 'Disconnected' : 'Checking...'}
+          </span>
         </div>
         <div className={styles.buttonGroup}>
           <a 
@@ -732,6 +792,12 @@ const AddressDemo = () => {
             className={styles.primaryButton}
           >
             返回首頁
+          </a>
+          <a
+            href="/api-docs"
+            className={styles.secondaryButton}
+          >
+            API 文件
           </a>
           <button 
             onClick={() => window.location.reload()}
@@ -741,6 +807,8 @@ const AddressDemo = () => {
           </button>
         </div>
       </div>
+      
+      <div className={`${styles.contentAd} ${styles.headerAd}`}><BannerAd /></div>
       
       <div className={styles.card}>
         <h2>快速查詢</h2>
@@ -753,6 +821,7 @@ const AddressDemo = () => {
           <div className={styles.formGroup}>
             <label className={styles.label}>地址查詢</label>
             <SimpleAddressForm onChange={handleAddressChange} />
+            <div className={styles.inlineAd}><BannerAd /></div>
           </div>
           
           {/* 完整地址查詢 */}
@@ -782,6 +851,7 @@ const AddressDemo = () => {
               </button>
             </div>
             <p className={styles.helperText}>輸入完整地址，系統會自動解析並查詢對應的郵遞區號</p>
+            <div className={styles.inlineAd}><BannerAd /></div>
           </div>
           
           {/* 郵遞區號查詢 */}
@@ -855,6 +925,7 @@ const AddressDemo = () => {
             </div>
           </div>
         )}
+        <div className={styles.contentAd}><BannerAd /></div>
         
         {/* 顯示所有相同路名的記錄 */}
         {sameRoadResults.length > 0 && (
@@ -926,13 +997,22 @@ const AddressDemo = () => {
                 </thead>
                 <tbody>
                   {searchResults.map((item, index) => (
-                    <tr key={index}>
-                      <td className={styles.tableCell}>{item.city}</td>
-                      <td className={styles.tableCell}>{item.district}</td>
-                      <td className={styles.postalCodeCell}>{item.postal_code}</td>
-                      <td className={styles.tableCell}>{item.road}</td>
-                      <td className={styles.tableCell}>{item.delivery_range}</td>
-                    </tr>
+                    <React.Fragment key={index}>
+                      <tr>
+                        <td className={styles.tableCell}>{item.city}</td>
+                        <td className={styles.tableCell}>{item.district}</td>
+                        <td className={styles.postalCodeCell}>{item.postal_code}</td>
+                        <td className={styles.tableCell}>{item.road}</td>
+                        <td className={styles.tableCell}>{item.delivery_range}</td>
+                      </tr>
+                      {(index === 4 || (index > 4 && (index - 4) % 10 === 0)) && (
+                        <tr>
+                          <td colSpan={5}>
+                            <div className={styles.contentAd}><BannerAd /></div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
@@ -953,9 +1033,13 @@ const AddressDemo = () => {
         <div className={styles.infoSection}>
           <h3>注意事項</h3>
           <ul className={styles.infoList}>
-            <li>郵遞區號資料來源為中華郵政，資料更新至最新版本</li>
+            <li>郵遞區號資料來源為中華郵政，資料非最新版本，查詢結果可能與實際不同</li>
+            <li>本網站為個人研究專案，如有錯誤請指正</li>
             <li>匯入大量資料可能需要較長時間，請耐心等待</li>
-            <li>實際使用時，建議根據業務需求調整資料庫索引以提高查詢效率</li>
+            <li>請勿用於非法用途，如：洗錢、詐騙、等非法用途</li>
+            <li>請勿連續大量查詢，如：每秒查詢10次以上，將會被暫停使用,本功能是在免費伺服器上運行，請勿過度使用</li>
+            <li>請勿用於商業用途，如需商業用途，請聯絡 ai.autoasst@gmail.com 洽談合作</li>
+            <li>網站所提供之資料, 僅供使用者參考, 如查詢結果與實際不同, 請以中華郵政(郵局)資料為準, 對於查詢結果錯誤, 本網站不負任何法律責任</li>
           </ul>
         </div>
         
@@ -972,12 +1056,19 @@ const AddressDemo = () => {
           <p>本專案使用的郵遞區號數據來源於中華郵政，具體授權和使用範圍請參考中華郵政的相關規定。</p>
         </div>
       </div>
+        </div>
+      </main>
+      <aside className={`${styles.sidebar} ${styles.rightSidebar}`}>
+        <SidebarAd />
+      </aside>
+      <div className={styles.mobileBannerAd}>
+        <BannerAd />
+      </div>
     </div>
   );
 };
 
 export default AddressDemo;
-
 <style jsx>{`
   .matchTypeBadge {
     display: inline-block;

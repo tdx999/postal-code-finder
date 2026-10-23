@@ -36,6 +36,39 @@
   margin-top: 0.5rem;
 }
 
+.dbStatusRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 14px;
+  color: #424245;
+}
+
+.dbStatusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  background-color: #c7c7cc;
+}
+
+.dbStatusPending {
+  background-color: #ffcc00;
+}
+
+.dbStatusOk {
+  background-color: #34c759;
+}
+
+.dbStatusFail {
+  background-color: #ff3b30;
+}
+
+.dbStatusText {
+  font-weight: 500;
+}
+
 .main {
   /* This class is a placeholder for main content area styling if needed */
 }
@@ -361,6 +394,19 @@
 
 .textGray {
   color: #86868b;
+}
+
+/* 廣告容器寬度控制 */
+.contentAd {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+.headerAd {
+  margin-top: 10px;
+  margin-bottom: 20px;
 }
 
 /* 注意事項與說明區塊樣式 */

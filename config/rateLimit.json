@@ -1,0 +1,15 @@
+{
+  "defaultPerMinute": 20,
+  "overrides": {
+    "127.0.0.1": {
+      "perMinute": 1000
+    }
+  },
+  "whitelist": [],
+  "windowSeconds": 600,
+  "ban": {
+    "enabled": true,
+    "violationThreshold": 3,
+    "banDurationSeconds": 1800
+  }
+}

@@ -124,28 +124,42 @@ const processAlleyLane = (alley) => {
  * 構建英文地址
  * @param {Object} address - 地址物件
  * @param {Object} translation - 翻譯數據
+ * @param {string} postalCode - 郵遞區號
  * @returns {Object} 英文地址資訊
  */
-const constructEnglishAddress = (address, translation) => {
+const constructEnglishAddress = (address, translation, postalCode = '') => {
   const parts = [];
   
-  // 添加門牌號
+  // 添加門牌號 - 格式化為 "No. XXX,"
+  // 優先使用 address.number，如果沒有則從 address.detail 中提取
+  let houseNumber = '';
   if (address.number) {
-    parts.push(address.number.replace('號', ''));
+    houseNumber = address.number.replace('號', '');
+  } else if (address.detail) {
+    // 從詳細地址中提取門牌號碼
+    const numberMatch = address.detail.match(/([０-９0-9]+)號?/);
+    if (numberMatch) {
+      houseNumber = numberMatch[1];
+    }
+  }
+  
+  if (houseNumber) {
+    parts.push(`No. ${houseNumber},`);
   }
   
   // 添加巷弄
   const alleyLanePart = processAlleyLane(address.alley);
-  if (alleyLanePart) parts.push(alleyLanePart);
+  if (alleyLanePart) parts.push(`${alleyLanePart},`);
   
   // 添加路名和段數
   if (address.road) {
+    const roadParts = [];
     const sectionPart = processSectionNumber(address.road);
-    if (sectionPart) parts.push(sectionPart);
+    if (sectionPart) roadParts.push(sectionPart);
     
     // 優先使用資料庫中的英文路名
     if (translation?.english_name) {
-      parts.push(translation.english_name);
+      roadParts.push(translation.english_name);
     } else {
       // 如果資料庫中沒有翻譯，使用預設轉換
       let roadName = address.road;
@@ -163,37 +177,47 @@ const constructEnglishAddress = (address, translation) => {
         }
       }
       
-      parts.push(`${roadName} ${roadType}`.trim());
+      roadParts.push(`${roadName} ${roadType}`.trim());
     }
+    
+    parts.push(`${roadParts.join(' ')},`);
   }
   
   // 添加區域名稱
   if (address.district) {
     // 優先使用資料庫中的英文區域名稱
     if (translation?.district_english) {
-      parts.push(translation.district_english);
+      parts.push(`${translation.district_english},`);
     } else {
       // 如果資料庫中沒有翻譯，使用預設轉換
       const districtName = address.district.slice(0, -1);
       const districtType = address.district.slice(-1);
       const englishDistrictType = districtTypeTranslations[districtType] || districtType;
-      parts.push(`${districtName} ${englishDistrictType}`);
+      parts.push(`${districtName} ${englishDistrictType},`);
     }
   }
   
   // 添加城市名稱
   if (address.city) {
+    let cityName = '';
     // 優先使用資料庫中的英文城市名稱
     if (translation?.city_english) {
-      parts.push(translation.city_english);
+      cityName = translation.city_english;
     } else {
       // 如果資料庫中沒有翻譯，使用預設轉換
-      parts.push(cityTranslations[address.city] || address.city);
+      cityName = cityTranslations[address.city] || address.city;
+    }
+    
+    // 如果有郵遞區號，加在城市名稱後面
+    if (postalCode) {
+      parts.push(`${cityName} ${postalCode},`);
+    } else {
+      parts.push(`${cityName},`);
     }
   }
   
-  // 添加國家
-  parts.push('Taiwan');
+  // 添加國家 - 格式化為 "Taiwan (R.O.C.)"
+  parts.push('Taiwan (R.O.C.)');
   
   return {
     fullAddress: parts.join(' '),
@@ -205,9 +229,10 @@ const constructEnglishAddress = (address, translation) => {
 /**
  * 主要的地址轉換函數
  * @param {Object} address - 地址物件
+ * @param {string} postalCode - 郵遞區號（可選）
  * @returns {Promise<Object>} 轉換後的英文地址
  */
-export const translateAddress = async (address) => {
+export const translateAddress = async (address, postalCode = '') => {
   try {
     if (!address || !address.city || !address.district || !address.road) {
       throw new Error('地址資訊不完整');
@@ -222,15 +247,16 @@ export const translateAddress = async (address) => {
     console.log('資料庫翻譯數據:', translation);
     
     // 構建英文地址
-    const result = constructEnglishAddress(address, translation);
+    const result = constructEnglishAddress(address, translation, postalCode);
     console.log('最終翻譯結果:', result);
     
     return result;
   } catch (error) {
     console.error('地址轉換錯誤:', error);
     // 如果出錯，返回基本的英文地址格式
+    const basicPostalCode = postalCode ? ` ${postalCode}` : '';
     return {
-      fullAddress: `${address.city} ${address.district} ${address.road} ${address.detail || ''}, Taiwan`,
+      fullAddress: `${address.city} ${address.district} ${address.road} ${address.detail || ''}${basicPostalCode}, Taiwan (R.O.C.)`,
       englishRoad: '',
       districtName: ''
     };
@@ -251,4 +277,12 @@ export const translateFullAddress = async (fullAddress) => {
     console.error('完整地址轉換錯誤:', error);
     return null;
   }
-};
+}
+// 地址英文化服務模組
+// 功能：將中文地址（城市/區/路/巷/弄/號）轉為英文格式
+// 資料來源：優先透過 /api/address/road-translation 取得 eroad/ecity/earea 等英譯
+// 核心方法：
+// - translateAddress(address, postalCode)：依結構化地址產生英文地址
+// - translateFullAddress(fullAddress)：完整字串的簡易轉換（可擴充解析）
+// 輸出：{ fullAddress, englishRoad, districtName }
+// 輔助方法：convertChineseNumToArabic、processSectionNumber、processAlleyLane、constructEnglishAddress

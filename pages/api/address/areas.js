@@ -1,16 +1,14 @@
-import { Pool } from 'pg';
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: false,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
+import pool from '../../../lib/db';
+import { checkRate } from '../../../lib/rateLimit';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, message: '方法不允許' });
+  }
+
+  const rate = checkRate(req);
+  if (!rate.allowed) {
+    return res.status(429).json({ success: false, message: '超出每分鐘限制', limit: rate.limit, remaining: rate.remaining, reset: rate.resetAt });
   }
 
   const { city } = req.query;
@@ -22,19 +20,10 @@ export default async function handler(req, res) {
   try {
     const client = await pool.connect();
     try {
-      // 先嘗試從 postal_codes 表獲取區域
-      let result = await client.query(
-        'SELECT DISTINCT district as area FROM postal_codes WHERE city = $1 ORDER BY district',
+      const result = await client.query(
+        'SELECT DISTINCT area FROM roads WHERE city = $1 ORDER BY area',
         [city]
       );
-      
-      // 如果 postal_codes 表沒有數據，嘗試從 roads 表獲取
-      if (result.rows.length === 0) {
-        result = await client.query(
-          'SELECT DISTINCT area FROM roads WHERE city = $1 ORDER BY area',
-          [city]
-        );
-      }
       
       const areas = result.rows.map(row => row.area);
       res.status(200).json({ success: true, areas });
@@ -50,3 +39,5 @@ export default async function handler(req, res) {
     });
   }
 }
+// 區域清單 API（指定城市）
+// 功能：從 roads 取區域清單；每 IP 限流檢查

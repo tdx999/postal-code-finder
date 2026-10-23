@@ -6,6 +6,7 @@ build/
 .env.local
 .env.development.local
 .env.test.local
+.env.production
 .env.production.local
 .vscode/
 .idea/
@@ -15,4 +16,8 @@ build/
 Thumbs.db
 logs/
 *.log
+postal-code-finder/database-export/
+.vercel
+
+.vercel
 database-export/

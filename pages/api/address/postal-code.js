@@ -1,13 +1,5 @@
-import { Pool } from 'pg';
-
-// 資料庫連接池
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: false, // 本地資料庫不需要 SSL
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
+import pool from '../../../lib/db';
+import { checkRate } from '../../../lib/rateLimit';
 
 /**
  * 解析完整地址
@@ -84,6 +76,10 @@ export default async function handler(req, res) {
   }
 
   try {
+    const rate = checkRate(req);
+    if (!rate.allowed) {
+      return res.status(429).json({ success: false, message: '超出每分鐘限制', limit: rate.limit, remaining: rate.remaining, reset: rate.resetAt });
+    }
     const { 
       city, 
       district, 
@@ -101,12 +97,13 @@ export default async function handler(req, res) {
     // 如果請求獲取不重複的區域列表
     if (distinctDistricts === 'true' && city) {
       query = `
-        SELECT DISTINCT district 
-        FROM postal_codes 
+        SELECT DISTINCT area AS district 
+        FROM roads 
         WHERE city = $1 
         ORDER BY district
       `;
       params = [city];
+      paramIndex = 2;
     }
     // 如果提供了完整地址，先解析地址
     else if (address) {
@@ -116,27 +113,30 @@ export default async function handler(req, res) {
       }
 
       query = `
-        SELECT * FROM postal_codes 
-        WHERE city = $1 AND district = $2
+        SELECT *, area AS district FROM roads 
+        WHERE city = $1 AND area = $2
       `;
       params = [parsed.city, parsed.district];
+      paramIndex = 3;
       
       if (parsed.road) {
-        query += ` AND road ILIKE $${++paramIndex}`;
+        query += ` AND road ILIKE $${paramIndex}`;
         params.push(`%${parsed.road}%`);
+        paramIndex++;
       }
     }
     // 如果提供了郵遞區號
     else if (zipcode) {
       query = `
-        SELECT * FROM postal_codes 
+        SELECT *, area AS district FROM roads 
         WHERE zipcode = $1
       `;
       params = [zipcode];
+      paramIndex = 2;
     }
     // 如果提供了城市、區域等參數
     else {
-      query = 'SELECT * FROM postal_codes WHERE 1=1';
+      query = 'SELECT *, area AS district FROM roads WHERE 1=1';
       
       if (city) {
         query += ` AND city = $${paramIndex}`;
@@ -145,7 +145,7 @@ export default async function handler(req, res) {
       }
       
       if (district) {
-        query += ` AND district = $${paramIndex}`;
+        query += ` AND area = $${paramIndex}`;
         params.push(district);
         paramIndex++;
       }
@@ -157,10 +157,12 @@ export default async function handler(req, res) {
       }
     }
 
+    let lim = parseInt(limit, 10);
+    if (!Number.isFinite(lim) || lim <= 0 || lim > 1000) lim = 100;
+
     // 添加限制和排序
     if (distinctDistricts !== 'true') {
-      query += ` ORDER BY city, district, road LIMIT $${paramIndex}`;
-      params.push(parseInt(limit));
+      query += ` ORDER BY city, district, road LIMIT ${lim}`;
     }
 
     console.log('執行查詢:', query);
@@ -190,3 +192,6 @@ export default async function handler(req, res) {
     });
   }
 }
+// 地址查詢 API（依完整地址解析城市/區/路後查詢）
+// 輸入：address 或 city/district/road/zipcode
+// 功能：解析中文地址、資料庫查詢、每 IP 限流檢查

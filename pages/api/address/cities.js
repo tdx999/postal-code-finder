@@ -1,12 +1,5 @@
-import { Pool } from 'pg';
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: false,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
+import pool from '../../../lib/db';
+import { checkRate } from '../../../lib/rateLimit';
 
 // 定义台湾城市的排序顺序（从北到南）
 const cityOrder = [
@@ -43,8 +36,13 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, message: '方法不允許' });
   }
 
+  const rate = checkRate(req);
+  if (!rate.allowed) {
+    return res.status(429).json({ success: false, message: '超出每分鐘限制', limit: rate.limit, remaining: rate.remaining, reset: rate.resetAt });
+  }
+
   try {
-    const result = await pool.query('SELECT DISTINCT city FROM postal_codes ORDER BY city');
+    const result = await pool.query('SELECT DISTINCT city FROM roads ORDER BY city');
     
     // 按照台湾地理位置排序
     const sortedCities = result.rows
@@ -75,3 +73,5 @@ export default async function handler(req, res) {
     });
   }
 }
+// 城市清單 API
+// 功能：從資料庫取得城市列表並依地理順序排序、每 IP 限流檢查

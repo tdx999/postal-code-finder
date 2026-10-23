@@ -19,6 +19,7 @@ const SimpleAddressForm = ({ onChange }) => {
     road: '',
     detail: ''
   });
+  const [roadInput, setRoadInput] = useState('');
 
   // 點擊外部時關閉建議列表
   useEffect(() => {
@@ -60,30 +61,30 @@ const SimpleAddressForm = ({ onChange }) => {
   }, [values.district]);
 
   // 當道路輸入變化時篩選道路
+  // 當道路輸入變化時篩選道路
   useEffect(() => {
-    if (!values.road || values.road.trim() === "") {
-      setFilteredRoads(roads); // 顯示所有道路，不再限制為前15個
+    const roadQuery = getRoadQuery(roadInput);
+    if (!roadQuery) {
+      setFilteredRoads([]);
+      setShowRoadSuggestions(false);
       return;
     }
 
-    const query = values.road.trim().toLowerCase();
-    
-    // 匹配開頭的項目優先顯示
-    const startsWithMatches = roads.filter(road => 
-      road.toLowerCase().startsWith(query)
+    const startsWithMatches = roads.filter(road =>
+      road.toLowerCase().startsWith(roadQuery)
     );
-    
-    // 然後是包含關鍵字的項目
-    const containsMatches = roads.filter(road => 
-      road.toLowerCase().includes(query) && !road.toLowerCase().startsWith(query)
+
+    const containsMatches = roads.filter(road =>
+      road.toLowerCase().includes(roadQuery) &&
+      !road.toLowerCase().startsWith(roadQuery)
     );
-    
-    // 不再限制數量，顯示所有匹配結果
+
     const filtered = [...startsWithMatches, ...containsMatches];
-    
+
     setFilteredRoads(filtered);
     setShowRoadSuggestions(filtered.length > 0);
-  }, [values.road, roads]);
+  }, [roadInput, roads]);
+ 
 
   // 通知父組件數值變更
   useEffect(() => {
@@ -241,6 +242,7 @@ const SimpleAddressForm = ({ onChange }) => {
   // 處理城市變更
   const handleCityChange = (e) => {
     const city = e.target.value;
+    setRoadInput('');
     setValues({
       ...values,
       city,
@@ -253,6 +255,7 @@ const SimpleAddressForm = ({ onChange }) => {
   // 處理區域變更
   const handleDistrictChange = (e) => {
     const district = e.target.value;
+    setRoadInput('');
     setValues({
       ...values,
       district,
@@ -262,28 +265,54 @@ const SimpleAddressForm = ({ onChange }) => {
   };
 
   // 處理道路輸入變更
-  const handleRoadChange = (e) => {
-    const road = e.target.value;
-    setValues({
-      ...values,
-      road
-    });
+  const getRoadQuery = (input) => {
+    if (!input) return '';
+    const trimmed = input.trim();
+    const digitIndex = trimmed.search(/[0-9]/);
+    if (digitIndex == -1) return trimmed;
+    return trimmed.slice(0, digitIndex).trim();
   };
 
-  // 處理詳細地址變更
-  const handleDetailChange = (e) => {
-    const detail = e.target.value;
+  const splitRoadDetail = (input) => {
+    const trimmed = input.trim();
+    if (!trimmed) return { road: '', detail: '' };
+
+    if (Array.isArray(roads) && roads.length > 0) {
+      const matched = roads.filter((road) => trimmed.startsWith(road));
+      if (matched.length > 0) {
+        const best = matched.sort((a, b) => b.length - a.length)[0];
+        return { road: best, detail: trimmed.slice(best.length).trim() };
+      }
+    }
+
+    const digitIndex = trimmed.search(/[0-9]/);
+    if (digitIndex != -1) {
+      return {
+        road: trimmed.slice(0, digitIndex).trim(),
+        detail: trimmed.slice(digitIndex).trim()
+      };
+    }
+
+    return { road: trimmed, detail: '' };
+  };
+
+  const handleRoadChange = (e) => {
+    const input = e.target.value;
+    setRoadInput(input);
+    const { road, detail } = splitRoadDetail(input);
     setValues({
       ...values,
+      road,
       detail
     });
   };
 
-  // 選擇道路建議
   const handleRoadSelect = (road) => {
+    setRoadInput(road);
     setValues({
       ...values,
-      road
+      road,
+      detail: ''
     });
     setShowRoadSuggestions(false);
   };
@@ -353,14 +382,14 @@ const SimpleAddressForm = ({ onChange }) => {
         <input
           ref={roadInputRef}
           type="text"
-          value={values.road}
+          value={roadInput}
           onChange={handleRoadChange}
           onFocus={() => {
             if (filteredRoads.length > 0) {
               setShowRoadSuggestions(true);
             }
           }}
-          placeholder="輸入道路名稱 (例如: 中山路)"
+          placeholder="輸入道路門號 (例如: 中山路1號)"
           style={{
             width: '100%',
             padding: '14px 16px',
@@ -416,24 +445,7 @@ const SimpleAddressForm = ({ onChange }) => {
       )}
       </div>
       
-      {/* 詳細地址輸入 */}
-      <div style={{ marginBottom: '15px' }}>
-        <input
-          type="text"
-          value={values.detail}
-          onChange={handleDetailChange}
-          placeholder="輸入詳細地址 (例如: 1號)"
-          style={{
-            width: '100%',
-            padding: '14px 16px',
-            border: '1px solid rgba(0, 0, 0, 0.1)',
-            borderRadius: '12px',
-            backgroundColor: 'rgba(0, 0, 0, 0.02)',
-            fontSize: '18px'
-          }}
-          disabled={!values.road || loading}
-        />
-      </div>
+      
       
       {/* 提交按鈕 */}
       <div>
