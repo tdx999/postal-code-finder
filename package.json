@@ -43,14 +43,14 @@
     "supabase",
     "vercel"
   ],
-  "author": "Your Name",
+  "author": "autoasstAI",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/postal-code-finder.git"
+    "url": "https://github.com/autoasstAI/postal-code-finder.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/postal-code-finder/issues"
+    "url": "https://github.com/autoasstAI/postal-code-finder/issues"
   },
-  "homepage": "https://github.com/your-username/postal-code-finder#readme"
+  "homepage": "https://github.com/autoasstAI/postal-code-finder#readme"
 }

@@ -1,210 +1,155 @@
-# Taiwan Postal Code Finder
+# 📮 Taiwan Postal Code Finder (台灣 3+3 郵遞區號查詢系統)
 
-Next.js 14 / React 18 打造的郵遞區號查詢系統。資料來源為官方 3+3 郵遞區號資料整理後存放於 Supabase (PostgreSQL)，可以部署到 Vercel 並透過 API 對外提供查詢服務。
-本地測試連線supabase要用
-用 NODE_ENV=production 跑本機：npm run build && npm start
-## 專案結構
-
-```
-postal-code-finder/
-├─ components/        # React UI 元件
-├─ lib/               # 共用工具（資料庫連線、限流…）
-├─ pages/             # Next.js Pages + API Routes
-├─ public/            # 靜態資源
-├─ scripts/           # 匯入/檢查資料腳本
-├─ database-export/   # 匯出/備份 SQL、CSV
-├─ styles/            # CSS Modules
-└─ package.json
-```
-
-## 主要技術
-
-- **Next.js 14**（`output: 'standalone'`，可部署至 Vercel）
-- **React 18**
-- **Node.js 18+**
-- **Supabase / PostgreSQL**（使用 Transaction Pooler 連線）
-- **pg**：Node.js PostgreSQL client
-
-## 環境變數
-
-| 變數名稱      | 範例                                                                                  | 說明 |
-|---------------|---------------------------------------------------------------------------------------|------|
-| `DATABASE_URL`| `postgresql://postgres.<PROJECT_REF>:<PASSWORD>@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres` | Supabase Transaction Pooler 連線字串 |
-
-> ⚠️ 注意：Supabase Dashboard → Settings → Database → Connection Pooling → Transaction Pooler 會提供 `aws-1-...pooler.supabase.com`（數字是 1）。請勿使用 `aws-0` 或 `db.<project>.supabase.co:5432` 的 direct connection，serverless 環境會因連線數受限而失敗。
-
-## 快速開始
-
-```bash
-# 安裝依賴
-npm install
-
-# 建立 .env.local
-echo "DATABASE_URL=postgresql://postgres.<PROJECT_REF>:<PASSWORD>@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres" > .env.local
-
-# 開發模式
-npm run dev
-
-# Production build
-npm run build
-npm run start
-```
-
-## 部署到 Vercel
-
-1. `git push` 到 GitHub/GitLab。
-2. Vercel Import 專案 → 在 **Settings → General** 將 Root Directory 設為 `postal-code-finder`。
-3. 在 **Settings → Environment Variables** 新增 `DATABASE_URL`（Production/Preview/Development 全部勾選）。
-4. 點擊 Deploy（若要重新部署，可到 Deployments → 選最新一筆 → ⋯ → Redeploy）。
-
-## 主要 npm scripts
-
-| 指令              | 說明                                        |
-|-------------------|---------------------------------------------|
-| `npm run dev`     | 啟動 Next.js 開發環境                       |
-| `npm run build`   | 建置 Production 版本                        |
-| `npm run start`   | 以 Production 模式啟動                      |
-| `npm run lint`    | ESLint                                      |
-| `npm run test:db` | 使用 `scripts/test-db-connection.js` 測試 DB 連線 |
-
-## 資料庫（roads 表）
-
-API 目前使用 `roads` 表，主要欄位：
-- `city`：縣市
-- `area`：行政區
-- `road`：道路名稱
-- `zipcode`：郵遞區號
-- 其他欄位：巷弄/門牌範圍等（可參考 `database-export/` 中的 CSV/SQL）
-
-可透過 `database-export/import-supabase.js` 或 `scripts/` 內工具匯入資料，匯入後使用下列腳本驗證：
-
-```bash
-node test-connection-quick.js "postgresql://postgres.<PROJECT_REF>:<PASSWORD>@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres"
-```
-
-## API 一覽
-
-所有 API 位於 `pages/api/`。均內建 rate limit（`lib/rateLimit.js`）。
-
-### URL 調用快速範例
-
-以下示範可直接在瀏覽器或 HTTP 客戶端呼叫的完整網址，僅需將網域 `https://your-domain.vercel.app` 換成實際部署網址：
-
-```
-# 郵遞區號查詢：完整地址參數
-https://postal-code-finder-kshtn6k5n-autoassts-projects.vercel.app/api/postal-code?address=桃園市中壢區中山路100號
-```
-
-### 1. 郵遞區號 / 地址搜尋
-
-```
-GET /api/address/postal-code
-```
-
-| 參數                | 說明                                                     |
-|---------------------|----------------------------------------------------------|
-| `address`           | 完整地址，系統會自動解析 city/district/road             |
-| `city`              | 縣市                                                     |
-| `district`          | 區（對應資料庫 `area` 欄位）                             |
-| `road`              | 道路名稱（支援模糊查詢）                                 |
-| `zipcode`           | 郵遞區號                                                 |
-| `limit`             | 回傳筆數（預設 100）                                     |
-| `distinctDistricts` | `true` 時只回傳某城市的行政區清單                        |
-
-**範例：**
-```
-GET /api/address/postal-code?city=桃園市&district=中壢區&road=中山路
-```
-
-**回應：**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "city": "桃園市",
-      "area": "中壢區",
-      "road": "中山路",
-      "zipcode": "320",
-      "...": "..."
-    }
-  ],
-  "count": 1
-}
-```
-
-### 2. 城市列表
-
-```
-GET /api/address/cities
-```
-
-從 `roads` 取得唯一 `city`，並依預設順序（北→南）排序。
-
-```json
-{
-  "success": true,
-  "data": ["基隆市", "臺北市", "新北市", "..."],
-  "count": 22
-}
-```
-
-### 3. 指定城市的行政區
-
-```
-GET /api/address/areas?city=桃園市
-```
-
-回傳該城市所有 `area`。
-
-```json
-{
-  "success": true,
-  "areas": ["桃園區", "中壢區", "..."],
-  "count": 13
-}
-```
-
-### 4. 指定城市/區的道路清單
-
-```
-GET /api/address/roads?city=桃園市&district=桃園區&search=中山
-```
-
-| 參數      | 說明                     |
-|-----------|--------------------------|
-| `city`    | 必填                     |
-| `district`| 必填（對應 `area`）      |
-| `search`  | 選填，模糊查道路         |
-
-```json
-{
-  "success": true,
-  "roads": ["中山路", "中山北路", "..."],
-  "count": 42
-}
-```
-
-## 限流與錯誤處理
-
-- `lib/rateLimit.js` 以 IP 為基礎限制每分鐘請求數，Config 在 `config/rateLimit.json`。
-- 錯誤訊息：開發模式 (`NODE_ENV=development`) 會回傳詳細錯誤，Production 則顯示泛用訊息。
-
-## 開發注意事項
-
-1. **連線池**：`lib/db.js` 會依 `DATABASE_URL` 判斷是否啟用 SSL（Supabase 會自動 `rejectUnauthorized: false`）。
-2. **資料表**：目前所有 API 使用 `roads` 表，如需改回 `postal_codes`，請同步調整 SQL。
-3. **部署**：`next.config.js` 已設定 `output: 'standalone'`，並在 client build 停用 `fs/net/tls/dns` 以避免打包錯誤。
-4. **Git**：`.env*` 已在 `.gitignore` 中，請勿提交任何密碼或連線字串。
-
-## 後續規劃
-
-- [ ] API Key / 計費模組
-- [ ] 管理後台（流量、查詢統計）
-- [ ] 多語系介面
-- [ ] 與其他系統（物流、不動產…）整合
+一個簡單、快速、現代化的台灣郵遞區號查詢系統。基於 **Next.js 14** 與 **Supabase (PostgreSQL)** 開發，支援智慧地址解析、視覺化前端查詢頁面，並提供開箱即用的 RESTful API，可直接免費一鍵部署到 **Vercel**！
 
 ---
 
-若需資料匯入或部署協助，可參考 `database-export/`、`scripts/` 內的工具，或開 Issue 提問。祝查詢順利！
+## ✨ 核心特色
 
+- 🔍 **智慧地址查詢**：直接輸入完整地址（如「桃園市中壢區中山路100號」），自動精準解析 3+3 碼郵遞區號。
+- 🏙️ **階層式下拉查詢**：提供「縣市 → 行政區 → 路名」三級連動快速檢索。
+- ⚡ **高效能連線池**：採用 Supabase Transaction Pooler，在 Serverless 環境下穩定不斷線。
+- 🛡️ **內建 API 限流保護**：防止被高頻惡意刷量，保障伺服器安全。
+- 📱 **RWD 響應式介面**：手機、平板、電腦都能完美瀏覽使用。
+- 🚀 **一鍵部署**：完整支援 Vercel，5 分鐘即可上線對外服務。
+
+---
+
+## 📁 專案目錄簡介
+
+```text
+postal-code-finder/
+├── components/          # 視覺化 UI 元件（地址表單、廣告、展示元件）
+├── pages/               # 頁面與 API 端點
+│   ├── index.js         # 前端首頁
+│   ├── api-docs.js      # API 線上文件說明頁
+│   └── api/             # 後端 API (查詢郵遞區號、縣市、區域、路名)
+├── lib/                 # 共用工具（PostgreSQL 連線池、API 限流器）
+├── config/              # 設定檔（限流規則 rateLimit.json）
+├── scripts/             # 資料庫連線測試與匯入工具
+├── docs/                # 詳細部署與疑難排解指南
+└── public/              # 靜態資源與外部嵌入小工具 (zip-widget.js)
+```
+
+---
+
+## 🚀 小白 3 步驟快速上手（本機運行）
+
+### 第 1 步：安裝專案套件
+確保電腦已安裝 [Node.js](https://nodejs.org/) (建議 v18 或以上)，在終端機執行：
+
+```bash
+npm install
+```
+
+### 第 2 步：設定資料庫連線（環境變數）
+在專案根目錄新增一個名為 `.env.local` 的檔案，並填入您的 Supabase 資料庫連線字串：
+
+```env
+DATABASE_URL="postgresql://postgres.[專案ID]:[你的資料庫密碼]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres"
+```
+
+> 💡 **新手注意（避坑指南）**：
+> 1. 請使用 Supabase 的 **Transaction Pooler** 連線（連接埠為 `6543`，網址通常包含 `pooler.supabase.com`）。
+> 2. 請**不要**使用 5432 的直接連線，避免 Serverless 環境因連線數過多而報錯。
+> 3. 您可以隨時執行 `npm run test:db` 測試連線是否正常。
+
+### 第 3 步：啟動本機開發伺服器
+
+```bash
+npm run dev
+```
+
+打開瀏覽器前往 [http://localhost:3000](http://localhost:3000)，即可看到查詢系統！
+
+---
+
+## 📡 常用 API 調用範例（新手秒懂）
+
+所有 API 均支援直接以 GET 方式呼叫，回傳標準 JSON 格式：
+
+### 1. 輸入完整地址，查詢郵遞區號（最常用）
+- **請求格式**：`GET /api/postal-code?address=完整地址`
+- **範例網址**：
+  ```
+  http://localhost:3000/api/postal-code?address=桃園市中壢區中山路100號
+  ```
+- **回傳範例**：
+  ```json
+  {
+    "success": true,
+    "zipcode": "320001",
+    "city": "桃園市",
+    "district": "中壢區",
+    "road": "中山路"
+  }
+  ```
+
+### 2. 取得全台灣縣市清單
+- **範例網址**：`GET /api/address/cities`
+- **回傳範例**：
+  ```json
+  {
+    "success": true,
+    "data": ["基隆市", "臺北市", "新北市", "桃園市", "..."],
+    "count": 22
+  }
+  ```
+
+### 3. 取得某縣市的行政區
+- **範例網址**：`GET /api/address/areas?city=桃園市`
+- **回傳範例**：
+  ```json
+  {
+    "success": true,
+    "areas": ["桃園區", "中壢區", "八德區", "..."],
+    "count": 13
+  }
+  ```
+
+### 4. 取得某區域的道路清單（支援模糊搜尋）
+- **範例網址**：`GET /api/address/roads?city=桃園市&district=中壢區&search=中山`
+- **回傳範例**：
+  ```json
+  {
+    "success": true,
+    "roads": ["中山路", "中山東路", "中山東路一段", "..."]
+  }
+  ```
+
+---
+
+## ☁️ 如何一鍵免費部署到 Vercel
+
+想要把網站放到網路上讓大家使用？跟著以下步驟走：
+
+1. **推送到 GitHub**：確認最新程式碼已推送到您的 GitHub 倉庫。
+2. **登入 Vercel**：前往 [Vercel 官網](https://vercel.com/)，使用 GitHub 帳號登入。
+3. **匯入專案 (Import Project)**：
+   - 點擊 **「Add New...」** → **「Project」**。
+   - 找到您的 `postal-code-finder` 儲存庫，點擊 **「Import」**。
+4. **設定環境變數 (Environment Variables)**：
+   - 在專案設定中的 **Environment Variables** 區塊：
+     - **Key**：`DATABASE_URL`
+     - **Value**：貼上您的 Supabase 連線字串
+     - Environment 全部勾選（Production, Preview, Development）
+5. **點擊「Deploy」**：約等待 1~2 分鐘，完成後即可獲得專屬網址！🎉
+
+---
+
+## ❓ 常見問題 Q&A
+
+**Q1：為什麼執行 `npm run dev` 搜尋時會顯示資料庫連線失敗？**  
+A：請檢查 `.env.local` 裡面的 `DATABASE_URL` 密碼是否正確，並且確認使用的是 Supabase 的 Pooler 連線（連接埠 `6543`）。
+
+**Q2：如何自訂 API 請求次數限制？**  
+A：可直接修改 `config/rateLimit.json`，調整每分鐘允許呼叫的次數上限。
+
+**Q3：如何把查詢小工具嵌入到其他網站？**  
+A：本專案已提供 `public/zip-widget.js`，其他網站只需引入該 script 即可輕鬆顯示查詢小工具。詳細可參考 `/pages/embed-demo.js`。
+
+---
+
+## 📜 開源協議 (License)
+
+本專案採用 [MIT License](LICENSE) 授權。歡迎自由修改、學習與使用！
