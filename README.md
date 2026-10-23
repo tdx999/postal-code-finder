@@ -1,5 +1,7 @@
 # 📮 Taiwan Postal Code Finder (台灣 3+3 郵遞區號查詢系統)
 
+> 🌐 **線上體驗網址 (Live Demo)**：[https://postal-code-finder-lac.vercel.app/](https://postal-code-finder-lac.vercel.app/)
+
 一個簡單、快速、現代化的台灣郵遞區號查詢系統。基於 **Next.js 14** 與 **Supabase (PostgreSQL)** 開發，支援智慧地址解析、視覺化前端查詢頁面，並提供開箱即用的 RESTful API，可直接免費一鍵部署到 **Vercel**！
 
 ---
